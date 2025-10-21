@@ -1,0 +1,86 @@
+#apiVersion: v1
+#kind: PersistentVolumeClaim
+#metadata:
+#  name: minecraft-data
+#spec:
+#  accessModes:
+#    - ReadWriteOnce
+#  resources:
+#    requests:
+#      storage: 10Gi # 請求 10GB 儲存空間
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minecraft-server
+spec:
+  serviceName: "minecraft-service"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minecraft
+  podManagementPolicy: "Parallel"
+  template:
+    metadata:
+      labels:
+        app: minecraft
+    spec:
+      #volumes:
+      #- name: data
+      #  persistentVolumeClaim:
+      #    claimName: minecraft-data
+      containers:
+      - name: minecraft
+        image: itzg/minecraft-server
+        ports:
+        - containerPort: 25565
+          name: minecraft
+        env:
+        - name: EULA
+          value: "TRUE"
+        - name: ENABLE_RCON
+          value: "true"          # 若不需要可設 "false"
+        - name: RCON_PASSWORD
+          valueFrom:             # 別把明碼寫在清單，示範用 Secret 較安全
+            secretKeyRef:
+              name: mc-rcon
+              key: password
+        - name: RCON_PORT
+          value: "25575"
+        - name: ENABLE_AUTOPAUSE
+          value: "false"     # 需要節電/省資源再改成 "true"
+        #- name: MAX_TICK_TIME
+        #  value: "-1"        # 若啟用 auto-pause，建議 -1 關閉 watchdog
+          # 可以添加其他 Minecraft 伺服器設定
+          # 常見可選變數（依需求加減）
+          # - name: MEMORY          # 例：設定 JVM 上限
+          #   value: "4G"
+          # - name: TYPE            # PAPER/SPIGOT/VANILLA 等
+          #   value: "PAPER"
+        volumeMounts:
+        - name: data
+          mountPath: /data
+  volumeClaimTemplates: # 使用 volumeClaimTemplates 讓 StatefulSet 管理 PVC
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10Gi
+      storageClassName: nfs-subdir-external-provisioner
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minecraft-service
+spec:
+  type: LoadBalancer # 由 MetalLB 分配 IP
+  selector:
+    app: minecraft
+  ports:
+  - protocol: TCP
+    port: 25565
+    targetPort: 25565
+  # （可選）保留玩家來源 IP；啟用後僅由有 Pod 的節點接外部流量
+  # externalTrafficPolicy: Local

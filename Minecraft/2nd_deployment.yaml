@@ -1,0 +1,91 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: minecraft-demo
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minecraft-headless
+  namespace: minecraft-demo
+  labels:
+    app: minecraft
+spec:
+  clusterIP: None                  # Headless Service，提供穩定 Pod DNS
+  selector:
+    app: minecraft
+  ports:
+  - name: mc
+    port: 25565
+    targetPort: 25565
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minecraft-server
+  namespace: minecraft-demo
+spec:
+  serviceName: "minecraft-headless" # 對應上面的 headless
+  replicas: 1
+  podManagementPolicy: Parallel      # 正確欄位：非 volumeManagementPolicy
+  selector:
+    matchLabels:
+      app: minecraft
+  template:
+    metadata:
+      labels:
+        app: minecraft
+    spec:
+      containers:
+      - name: minecraft
+        image: itzg/minecraft-server:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 25565
+          name: minecraft
+        env:
+        - name: EULA
+          value: "TRUE"
+        # 依需求開啟/調整：
+        # - name: MEMORY          # 限制 JVM 記憶體
+        #   value: "2G"
+        # - name: TYPE            # VANILLA / PAPER / SPIGOT / FORGE...
+        #   value: "PAPER"
+        # - name: ENABLE_RCON     # 需要 RCON 管理時
+        #   value: "true"
+        # - name: RCON_PASSWORD
+        #   value: "changeme"
+        # - name: RCON_PORT
+        #   value: "25575"
+        volumeMounts:
+        - name: data
+          mountPath: /data
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi
+      storageClassName: longhorn      # 改成你的 SC（例：local-path / longhorn）
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minecraft-service
+  namespace: minecraft-demo
+  labels:
+    app: minecraft
+spec:
+  type: LoadBalancer                  # 交由 MetalLB 派發 EXTERNAL-IP
+  selector:
+    app: minecraft
+  ports:
+  - name: mc
+    protocol: TCP
+    port: 25565
+    targetPort: 25565
+  # （可選）保留玩家來源 IP；啟用後僅由有 Pod 的節點接外部流量
+  # externalTrafficPolicy: Local
+
