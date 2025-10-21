@@ -1,0 +1,20 @@
+# my-fleet-apps/nginx-app/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  replicas: 2  # 我們希望有 2 個 Nginx Pod
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.21.6 # 使用特定版本的 Nginx
+        ports:
+        - containerPort: 80
