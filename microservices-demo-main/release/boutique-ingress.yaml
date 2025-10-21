@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: boutique-ingress
+  #annotations:
+  #  kubernetes.io/ingress.class: "nginx"
+spec:
+  rules:
+  - host: "shop.b.apps.containers-dev-lab.cc" # <--- 修改為您的域名
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-external
+            port:
+              number: 80

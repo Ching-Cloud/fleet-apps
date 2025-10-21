@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echoserver-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: echoserver
+  template:
+    metadata:
+      labels:
+        app: echoserver
+    spec:
+      containers:
+      - name: echoserver
+        image: asia.gcr.io/k8s-artifacts-prod/echoserver:1.10
+        ports:
+        - containerPort: 8080
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echoserver-service
+spec:
+  type: ClusterIP # 設定為 ClusterIP
+  selector:
+    app: echoserver
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: echoserver-ingress
+  #annotations:
+    #kubernetes.io/ingress.class: "nginx"
+spec:
+  #ingressClassName: ingress-nginx
+  rules:
+  - host: "echoserver.a.apps.containers-dev-lab.cc" # <--- 修改為您的域名
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: echoserver-service
+            port:
+              number: 80
