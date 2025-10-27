@@ -1,0 +1,4 @@
+apiersion: v1
+kind: Namespace
+metadata:
+  name: saleor

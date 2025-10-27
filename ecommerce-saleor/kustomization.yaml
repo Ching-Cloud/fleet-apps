@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - 00-namespace.yaml
+  - 01-postgres.yaml
+  - 02-redis.yaml
+  - 03-saleor-api.yaml
+  - 04-saleor-dashboard.yaml
+  - 05-ingress.yaml
+
+commonLabels:
+  app.kubernetes.io/part-of: saleor
+  app.kubernetes.io/managed-by: kustomize
+
+images:
+  - name: saleor/api
+    newTag: "3.17"
+  - name: saleor/dashboard
+    newTag: "3.17"
+  - name: postgres
+    newTag: "15"
+  - name: redis
+    newTag: "7.4"
