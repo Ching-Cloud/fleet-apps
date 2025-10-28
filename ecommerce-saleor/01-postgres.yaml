@@ -4,13 +4,13 @@ metadata:
   name: postgres
   namespace: saleor
 spec:
-  ClusterIP: None
-  posts:
+  clusterIP: None
+  ports:
   - port: 5432
   selector:
     app: postgres
 ---
-apiVersion: v1
+apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: postgres
@@ -20,7 +20,7 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: postgres
+      app: "postgres"
   template:
     metadata:
       labels:

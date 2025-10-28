@@ -19,6 +19,13 @@ spec:
         env:
         - name: API_URI
           value: http://saleor-api.saleor.svc.cluster.local:8000/graphql/
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
         ports:
         - containerPort: 80
 ---

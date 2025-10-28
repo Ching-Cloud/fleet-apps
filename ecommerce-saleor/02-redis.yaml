@@ -4,13 +4,13 @@ metadata:
   name: redis
   namespace: saleor
 spec:
-  ClusterIP: None
-  posts:
+  clusterIP: None
+  ports:
   - port: 6379
   selector:
     app: redis
 ---
-apiVersion: v1
+apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: redis

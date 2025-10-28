@@ -13,6 +13,17 @@ commonLabels:
   app.kubernetes.io/part-of: saleor
   app.kubernetes.io/managed-by: kustomize
 
+# 由 kustomize 產生 Secret（示範用固定值；實務上可改為 .env 檔或外部密管）
+secretGenerator:
+  - name: saleor-secret
+    namespace: saleor
+    literals:
+      - POSTGRES_PASSWORD=postgresP@ssw0rd
+      - SECRET_KEY=2b79287758adfc50da44ccb2510e9e60
+    # 若你希望 Secret 名稱不自動加雜湊，打開下一行（但要自行控管更新時機）
+    options:
+      disableNameSuffixHash: true
+
 images:
   - name: saleor/api
     newTag: "3.17"
