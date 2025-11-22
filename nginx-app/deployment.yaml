@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: fleet-apps
+  #namespace: fleet-apps
   name: nginx-deployment
 spec:
   replicas: 2  # 我們希望有 2 個 Nginx Pod
