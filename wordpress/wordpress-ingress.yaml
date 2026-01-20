@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wordpress-ingress
+  annotations:
+    # 如果未來需要 HTTPS，可以在這裡加 cert-manager 的註解
+    # kubernetes.io/ingress.class: "nginx" # RKE2 預設會自動抓，通常不用寫，但寫了也無妨
+spec:
+  rules:
+  - host: wordpress.temp.lab.local  # 這裡換成你想用的域名
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: wordpress  # 對應到上面的 Service 名稱
+            port:
+              number: 80

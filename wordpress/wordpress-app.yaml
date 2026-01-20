@@ -1,0 +1,135 @@
+# 1. 儲存密碼的 Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-pass
+type: Opaque
+stringData:
+  password: "MySuperSecretPassword123!" # 資料庫密碼
+---
+# 2. MySQL 資料庫服務
+apiVersion: v1
+kind: Service
+metadata:
+  name: wordpress-mysql # Web 端將使用這個名稱連線
+  labels:
+    app: wordpress
+spec:
+  ports:
+    - port: 3306
+  selector:
+    app: wordpress
+    tier: mysql
+  clusterIP: None # Headless Service，適合資料庫
+---
+# 3. MySQL 資料庫儲存空間申告 (PVC)
+# RKE2 預設安裝了 Local Path Provisioner，可以直接使用
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pv-claim
+  labels:
+    app: wordpress
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: nfs-client
+---
+# 4. MySQL Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wordpress-mysql
+  labels:
+    app: wordpress
+spec:
+  selector:
+    matchLabels:
+      app: wordpress
+      tier: mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: wordpress
+        tier: mysql
+    spec:
+      containers:
+      - image: mysql:5.7
+        name: mysql
+        imagePullPolicy: Always # 離線關鍵：不從網路拉取
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+        - name: MYSQL_DATABASE
+          value: wordpress
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: mysql-pv-claim
+---
+# 5. WordPress 網頁服務 (對外)
+apiVersion: v1
+kind: Service
+metadata:
+  name: wordpress
+  labels:
+    app: wordpress
+spec:
+  ports:
+    - port: 80
+      targetPort: 80 # 容器內的 port
+      #nodePort: 30080 # 指定一個對外 Port (選用，範圍 30000-32767)
+  selector:
+    app: wordpress
+    tier: frontend
+  type: ClusterIP # 使用 NodePort 讓外部瀏覽器可以存取
+---
+# 6. WordPress Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wordpress
+  labels:
+    app: wordpress
+spec:
+  selector:
+    matchLabels:
+      app: wordpress
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: wordpress
+        tier: frontend
+    spec:
+      containers:
+      - image: wordpress:latest
+        name: wordpress
+        imagePullPolicy: Always # 離線關鍵
+        env:
+        - name: WORDPRESS_DB_HOST
+          value: wordpress-mysql # 指向上面定義的 Service 名稱
+        - name: WORDPRESS_DB_USER
+          value: root
+        - name: WORDPRESS_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+        ports:
+        - containerPort: 80
+          name: wordpress
