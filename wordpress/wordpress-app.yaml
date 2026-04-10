@@ -36,7 +36,7 @@ spec:
   resources:
     requests:
       storage: 5Gi
-  storageClassName: nfs-client
+  storageClassName: nfs-subdir-external-provisioner
 ---
 # 4. MySQL Deployment
 apiVersion: apps/v1

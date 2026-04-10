@@ -7,7 +7,7 @@ metadata:
     # kubernetes.io/ingress.class: "nginx" # RKE2 預設會自動抓，通常不用寫，但寫了也無妨
 spec:
   rules:
-  - host: wordpress.temp.lab.local  # 這裡換成你想用的域名
+  - host: wordpress.b.apps.containers-dev-lab.cc  # 這裡換成你想用的域名
     http:
       paths:
       - path: /
