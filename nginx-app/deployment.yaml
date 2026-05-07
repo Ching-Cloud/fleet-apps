@@ -16,6 +16,10 @@ spec:
     spec:
       containers:
       - name: nginx
+<<<<<<< HEAD
         image: nginx:1.29.0 # 使用特定版本的 Nginx
+=======
+        image: nginx:1.25.3 # 使用特定版本的 Nginx
+>>>>>>> 0ed014e (Renew)
         ports:
         - containerPort: 80
