@@ -20,7 +20,7 @@ metadata:
   namespace: fleet-apps
   name: nginx-deployment
 spec:
-  replicas: 2  # 我們希望有 2 個 Nginx Pod
+  replicas: 3  # 我們希望有 2 個 Nginx Pod
   selector:
     matchLabels:
       app: nginx
